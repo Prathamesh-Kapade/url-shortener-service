@@ -1,0 +1,110 @@
+<configuration>
+
+    <conversionRule conversionWord="clr"
+                    class="org.springframework.boot.logging.logback.ColorConverter"/>
+
+    <!-- ── Properties ────────────────────────────────────────── -->
+    <property name="LOG_PATH" value="logs"/>
+    <property name="APP_NAME" value="urlshortener"/>
+
+    <!-- ══════════════════════════════════════════════════════════
+         CONSOLE APPENDER — colored, clean format
+    ══════════════════════════════════════════════════════════════ -->
+    <appender name="CONSOLE"
+              class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>
+                %clr(%d{HH:mm:ss}){faint} %clr(%-5level){highlight} %clr([%15.15thread]){faint} %clr(%-40.40logger{39}){cyan} - %msg%n
+            </pattern>
+        </encoder>
+    </appender>
+
+    <!-- ══════════════════════════════════════════════════════════
+         FILE APPENDER — rolling daily, max 30 days / 100MB
+    ══════════════════════════════════════════════════════════════ -->
+    <appender name="FILE"
+              class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/${APP_NAME}.log</file>
+        <rollingPolicy
+                class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- New file every day: urlshortener.2024-01-01.log -->
+            <fileNamePattern>
+                ${LOG_PATH}/${APP_NAME}.%d{yyyy-MM-dd}.log
+            </fileNamePattern>
+            <maxHistory>30</maxHistory>       <!-- keep 30 days -->
+            <totalSizeCap>500MB</totalSizeCap> <!-- max total size -->
+        </rollingPolicy>
+        <encoder>
+            <!-- File logs: no color, with full date -->
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %-40.40logger{39} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- ══════════════════════════════════════════════════════════
+         ERROR FILE — only ERROR level in separate file
+    ══════════════════════════════════════════════════════════════ -->
+    <appender name="ERROR_FILE"
+              class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>${LOG_PATH}/${APP_NAME}-error.log</file>
+
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>ERROR</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+        <rollingPolicy
+                class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>
+                ${LOG_PATH}/${APP_NAME}-error.%d{yyyy-MM-dd}.log
+            </fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %-40.40logger{39} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- ══════════════════════════════════════════════════════════
+         YOUR APP — INFO level, goes to console + file
+    ══════════════════════════════════════════════════════════════ -->
+    <logger name="com.demo.urlshorterservice"
+            level="INFO" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+        <appender-ref ref="ERROR_FILE"/>
+    </logger>
+
+    <!-- ══════════════════════════════════════════════════════════
+         KAFKA — suppress all the noise
+    ══════════════════════════════════════════════════════════════ -->
+    <logger name="org.apache.kafka"                    level="WARN"/>
+    <logger name="org.apache.kafka.clients.NetworkClient" level="ERROR"/>
+    <logger name="org.apache.kafka.clients.consumer.internals.ConsumerCoordinator" level="WARN"/>
+    <logger name="org.apache.kafka.clients.Metadata"   level="WARN"/>
+    <logger name="org.springframework.kafka"           level="WARN"/>
+    <logger name="state.change.logger"                 level="OFF"/>
+
+    <!-- ══════════════════════════════════════════════════════════
+         HIBERNATE — hide SQL unless debugging
+    ══════════════════════════════════════════════════════════════ -->
+    <logger name="org.hibernate.SQL"                   level="WARN"/>
+    <logger name="org.hibernate.orm.jdbc.bind"         level="WARN"/>
+    <logger name="org.hibernate"                       level="WARN"/>
+
+    <!-- ══════════════════════════════════════════════════════════
+        SPRING FRAMEWORK — only show important things
+   ══════════════════════════════════════════════════════════════ -->
+    <logger name="org.springframework.web"             level="WARN"/>
+    <logger name="org.springframework.data"            level="WARN"/>
+    <logger name="org.springframework.orm"             level="WARN"/>
+    <logger name="com.zaxxer.hikari"                   level="WARN"/>
+
+    <!-- ══════════════════════════════════════════════════════════
+         ROOT — everything else at WARN, console only
+    ══════════════════════════════════════════════════════════════ -->
+    <root level="WARN">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="ERROR_FILE"/>
+    </root>
+
+</configuration>
