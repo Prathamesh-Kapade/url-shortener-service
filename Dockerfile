@@ -1,20 +1,30 @@
-# Use official OpenJDK image
+# -------- Stage 1: Build --------
 FROM maven:3.9.6-eclipse-temurin-21 AS build
 
-# Set working directory
 WORKDIR /app
 
-# Copy jar file
+# Copy pom.xml first (for caching)
 COPY pom.xml .
+
+# Download dependencies
 RUN mvn dependency:go-offline -q
 
+# Copy source code
+COPY src ./src
+
+# Build the jar
+RUN mvn clean package -DskipTests
+
+# -------- Stage 2: Run --------
 FROM eclipse-temurin:21-jre-alpine
+
 WORKDIR /app
 
-# Copy only the JAR from the build stage
+# Copy built jar from build stage
 COPY --from=build /app/target/*.jar app.jar
 
-#Railway overrides with $PORT env var
+# Railway uses dynamic PORT
 EXPOSE 8080
-# Run application
+
+# Run app
 ENTRYPOINT ["java", "-jar", "app.jar"]
